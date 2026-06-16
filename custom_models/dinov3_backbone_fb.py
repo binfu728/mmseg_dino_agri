@@ -58,7 +58,7 @@ class _MmcvMSDeformAttn(nn.Module):
         )
 
 
-@MODELS.register_module(force=True)
+@MODELS.register_module()
 class DINOv3BackboneMmseg_fb(BaseModule):
     """DINOv3 ViT + DINOv3_Adapter wrapped as an mmseg backbone.
 
@@ -92,6 +92,8 @@ class DINOv3BackboneMmseg_fb(BaseModule):
         checkpoint=None,
         interaction_indexes=None,
         freeze_backbone: bool = False,
+        finetune_vit: bool = False,
+        vit_cfg_overrides=None,
         init_cfg=None,
     ):
         super().__init__(init_cfg=None)  # skip mmengine weight init
@@ -126,6 +128,12 @@ class DINOv3BackboneMmseg_fb(BaseModule):
             "crops": {"global_crops_size": 224},
         })
 
+        # Per-architecture student overrides (e.g. sat493m ViT-L needs
+        # n_storage_tokens=4 and mask_k_bias=True to match the checkpoint).
+        if vit_cfg_overrides:
+            for k, v in vit_cfg_overrides.items():
+                cfg.student[k] = v
+
         vit = build_model_for_eval(cfg, pretrained_weights=checkpoint)
 
         if interaction_indexes is None:
@@ -133,16 +141,29 @@ class DINOv3BackboneMmseg_fb(BaseModule):
                 arch, [2, 5, 8, 11]
             )
 
-        self.adapter = DINOv3_Adapter(vit, interaction_indexes=interaction_indexes)
+        self.adapter = DINOv3_Adapter(
+            vit, 
+            interaction_indexes=interaction_indexes,
+            with_cp=False  # Disable checkpointing for DDP compatibility
+        )
 
         # Replace every MSDeformAttn in the adapter with the mmcv-backed wrapper.
         # This must happen after DINOv3_Adapter.__init__ (which calls _reset_parameters
         # on the original modules) so the new modules get their own init_weights call.
         self._replace_msda_with_mmcv()
 
-        # DINOv3_Adapter always freezes the inner backbone; optionally unfreeze.
-        if not freeze_backbone:
+        # DINOv3_Adapter wraps the ViT forward in no_grad by default (frozen
+        # feature extractor). finetune_vit=True both flips that context and
+        # enables grads, so the backbone is actually trained.
+        self.adapter.finetune_vit = finetune_vit
+        if not freeze_backbone or finetune_vit:
             self.adapter.backbone.requires_grad_(True)
+        
+        # Ensure all adapter parameters are trainable (except backbone if frozen)
+        # This explicitly sets requires_grad for all adapter-specific parameters
+        for name, param in self.adapter.named_parameters():
+            if not freeze_backbone or 'backbone' not in name:
+                param.requires_grad = True
 
         self.embed_dim = vit.embed_dim
 
