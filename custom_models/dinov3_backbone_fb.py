@@ -58,8 +58,8 @@ class _MmcvMSDeformAttn(nn.Module):
         )
 
 
-@MODELS.register_module()
-class DINOv3BackboneMmseg(BaseModule):
+@MODELS.register_module(force=True)
+class DINOv3BackboneMmseg_fb(BaseModule):
     """DINOv3 ViT + DINOv3_Adapter wrapped as an mmseg backbone.
 
     Returns a tuple of 4 feature maps at strides [4, 8, 16, 32].

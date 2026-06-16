@@ -9,10 +9,10 @@ GPUS=${1:-8}; shift || true
 PORT=${PORT:-29512}
 
 # 2. 直接指向当前目录下的 config 文件（请把下面这个名字换成你实际的 config 文件名）
-CONFIG="$MMSEG_ROOT/configs/dinov3s_m2f_label20000_512x512.py"
+CONFIG="$MMSEG_ROOT/configs/dinov3l_m2f_agri.py"
 
 # 3. 在当前目录下创建 work_dirs 文件夹
-WORK_DIR="$MMSEG_ROOT/work_dirs"
+WORK_DIR="$MMSEG_ROOT/work_dirs/123"
 PY=${PY:-python}
 
 mkdir -p "$WORK_DIR"

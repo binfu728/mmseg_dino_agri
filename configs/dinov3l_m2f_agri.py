@@ -1,17 +1,17 @@
 custom_imports = dict(
     imports=[
         'custom_datasets.customAgri',
-        'custom_models.dinov3_backbone',
+        'custom_models.dinov3_backbone_fb',
     ],
     allow_failed_imports=False,
 )
 
 _base_ = [
-    '/mnt/ht2_nas2/00-model/00-fb/MMcodes/mmsegmentation/configs/mask2former/mask2former_r50_8xb2-160k_ade20k-512x512.py',
+    '/mnt/ht2-nas2/00-model/00-fb/MMcodes/mmsegmentation/configs/mask2former/mask2former_r50_8xb2-160k_ade20k-512x512.py',
 ]
 # ── Paths ─────────────────────────────────────────────────────────────────────
-DINO_CKPT   = '/mnt/ht2_nas2/00-model/00-fb/mmseg_data/weights/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth'
-DATA_ROOT   = '/mnt/qh2-nas3/data_verification/label20000/Segmentation/' 
+DINO_CKPT   = '/mnt/ht2-nas2/00-model/00-fb/mmseg_data/weights/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth'
+DATA_ROOT   = '/mnt/ht2-nas2/00-model/00-jiangzf/label20000/Segmentation/' 
 # ──────────────────────────────────────────────────────────────────────────────
 
 img_size    = 256
@@ -35,7 +35,7 @@ model = dict(
     data_preprocessor=data_preprocessor,
     backbone=dict(
         _delete_=True,
-        type='DINOv3BackboneMmseg',
+        type='DINOv3BackboneMmseg_fb',
         arch='vit_large',
         patch_size=16,
         checkpoint=DINO_CKPT,
