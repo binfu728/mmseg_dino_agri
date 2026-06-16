@@ -1,6 +1,6 @@
 custom_imports = dict(
     imports=[
-        'custom_datasets.custom_agri',
+        'custom_datasets.customAgri',
         'custom_models.dinov3_backbone',
     ],
     allow_failed_imports=False,
@@ -39,7 +39,7 @@ model = dict(
         arch='vit_large',
         patch_size=16,
         checkpoint=DINO_CKPT,
-        freeze_backbone=True,
+        freeze_backbone=False,
     ),
     decode_head=dict(
         in_channels=[1024, 1024, 1024, 1024],
@@ -103,7 +103,7 @@ test_dataloader = dict(
     dataset=dict(
         type='CustomAgriDataset',
         data_root=DATA_ROOT,
-        # 注意: 如果你的测试集文件名为 test10_txt.txt，请改为 split='test10_txt'
+        # 注意: 如果你的测试集文件名为 test10.txt，请改为 split='test10'
         split='test10',   
         pipeline=val_pipeline,
     ),
@@ -125,8 +125,6 @@ optim_wrapper = dict(
         custom_keys={
             # 修复：仅对ViT本身（预训练权重）缩小学习率，保证Adapter正常收敛
             'backbone.adapter.backbone': dict(lr_mult=0.1, decay_mult=1.0),
-            'backbone.adapter.backbone.patch_embed': dict(lr_mult=1.0, decay_mult=1.0),
-            'backbone.adapter.spm.stem': dict(lr_mult=1.0, decay_mult=1.0),
             'query_embed': embed_multi,
             'query_feat':  embed_multi,
             'level_embed': embed_multi,
