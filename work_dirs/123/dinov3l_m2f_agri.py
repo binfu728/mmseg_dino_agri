@@ -1,5 +1,5 @@
-DATA_ROOT = '/mnt/qh2-nas3/data_verification/label20000/Segmentation/'
-DINO_CKPT = '/mnt/ht2_nas2/00-model/00-fb/mmseg_data/weights/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth'
+DATA_ROOT = '/mnt/ht2-nas2/00-model/00-jiangzf/label20000/Segmentation/'
+DINO_CKPT = '/mnt/ht2-nas2/00-model/00-fb/mmseg_data/weights/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth'
 auto_scale_lr = dict(base_batch_size=16, enable=False)
 crop_size = (
     512,
@@ -9,7 +9,7 @@ custom_imports = dict(
     allow_failed_imports=False,
     imports=[
         'custom_datasets.customAgri',
-        'custom_models.dinov3_backbone',
+        'custom_models.dinov3_backbone_fb',
     ])
 data_preprocessor = dict(
     bgr_to_rgb=False,
@@ -29,7 +29,7 @@ default_hooks = dict(
     checkpoint=dict(
         by_epoch=False,
         interval=2000,
-        max_keep_ckpts=3,
+        max_keep_ckpts=1,
         save_best='mIoU',
         type='CheckpointHook'),
     logger=dict(interval=50, log_metric_by_epoch=False, type='LoggerHook'),
@@ -43,6 +43,7 @@ env_cfg = dict(
     cudnn_benchmark=True,
     dist_cfg=dict(backend='nccl'),
     mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
+find_unused_parameters = True
 img_ratios = [
     0.5,
     0.75,
@@ -52,7 +53,7 @@ img_ratios = [
     1.75,
 ]
 img_size = 256
-launcher = 'none'
+launcher = 'pytorch'
 load_from = None
 log_level = 'INFO'
 log_processor = dict(by_epoch=False)
@@ -60,10 +61,10 @@ model = dict(
     backbone=dict(
         arch='vit_large',
         checkpoint=
-        '/mnt/ht2_nas2/00-model/00-fb/mmseg_data/weights/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth',
+        '/mnt/ht2-nas2/00-model/00-fb/mmseg_data/weights/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth',
         freeze_backbone=False,
         patch_size=16,
-        type='DINOv3BackboneMmseg'),
+        type='DINOv3BackboneMmseg_fb'),
     data_preprocessor=dict(
         bgr_to_rgb=False,
         mean=None,
@@ -89,7 +90,7 @@ model = dict(
         loss_cls=dict(
             class_weight=[
                 1.0,
-                1.0,
+                2.0,
                 0.1,
             ],
             loss_weight=2.0,
@@ -233,12 +234,12 @@ optimizer = dict(
     weight_decay=0.05)
 param_scheduler = [
     dict(
-        begin=0, by_epoch=False, end=1500, start_factor=0.001,
+        begin=0, by_epoch=False, end=3000, start_factor=0.001,
         type='LinearLR'),
     dict(
         begin=1500,
         by_epoch=False,
-        end=20000,
+        end=80000,
         eta_min=0,
         power=0.9,
         type='PolyLR'),
@@ -248,7 +249,7 @@ test_cfg = dict(type='TestLoop')
 test_dataloader = dict(
     batch_size=2,
     dataset=dict(
-        data_root='/mnt/qh2-nas3/data_verification/label20000/Segmentation/',
+        data_root='/mnt/ht2-nas2/00-model/00-jiangzf/label20000/Segmentation/',
         pipeline=[
             dict(img_size=256, type='LoadCustomRaster'),
             dict(type='PackSegInputs'),
@@ -269,11 +270,11 @@ test_pipeline = [
     dict(reduce_zero_label=True, type='LoadAnnotations'),
     dict(type='PackSegInputs'),
 ]
-train_cfg = dict(max_iters=20000, type='IterBasedTrainLoop', val_interval=1000)
+train_cfg = dict(max_iters=80000, type='IterBasedTrainLoop', val_interval=2000)
 train_dataloader = dict(
     batch_size=4,
     dataset=dict(
-        data_root='/mnt/qh2-nas3/data_verification/label20000/Segmentation/',
+        data_root='/mnt/ht2-nas2/00-model/00-jiangzf/label20000/Segmentation/',
         pipeline=[
             dict(img_size=256, type='LoadCustomRaster'),
             dict(prob=0.5, type='CustomRandomRotate90'),
@@ -323,7 +324,7 @@ val_cfg = dict(type='ValLoop')
 val_dataloader = dict(
     batch_size=2,
     dataset=dict(
-        data_root='/mnt/qh2-nas3/data_verification/label20000/Segmentation/',
+        data_root='/mnt/ht2-nas2/00-model/00-jiangzf/label20000/Segmentation/',
         pipeline=[
             dict(img_size=256, type='LoadCustomRaster'),
             dict(type='PackSegInputs'),
@@ -348,4 +349,4 @@ visualizer = dict(
     vis_backends=[
         dict(type='LocalVisBackend'),
     ])
-work_dir = './work_dirs/dinov3l_m2f_agri'
+work_dir = '/mnt/qh2-nas3/00-model/00-fb/mmseg_dino_agri/work_dirs/123'

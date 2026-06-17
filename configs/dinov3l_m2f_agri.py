@@ -51,7 +51,8 @@ model = dict(
             use_sigmoid=False,
             loss_weight=2.0,
             reduction='mean',
-            class_weight=[1.0] * num_classes + [0.1],
+            # class_weight=[1.0] * num_classes + [0.1],
+            class_weight=[1.0,2.0,0.1],
         ),
     ),
 )
@@ -133,20 +134,18 @@ optim_wrapper = dict(
     ),
 )
 
-train_cfg = dict(type='IterBasedTrainLoop', max_iters=20000, val_interval=2000, _delete_=True)
-val_cfg   = dict(type='ValLoop', _delete_=True)
-test_cfg  = dict(type='TestLoop', _delete_=True)
-
 param_scheduler = [
-    dict(type='LinearLR', start_factor=1e-3, begin=0, end=1500, by_epoch=False),
-    dict(type='PolyLR', eta_min=0, power=0.9, begin=1500, end=20000, by_epoch=False),
+    dict(type='LinearLR', start_factor=1e-3, begin=0, end=3000, by_epoch=False),
+    dict(type='PolyLR', eta_min=0, power=0.9, begin=1500, end=80000, by_epoch=False),
 ]
-train_cfg = dict(type='IterBasedTrainLoop', max_iters=20000, val_interval=1000)
+train_cfg = dict(type='IterBasedTrainLoop', max_iters=80000, val_interval=2000)
 val_cfg   = dict(type='ValLoop')
 test_cfg  = dict(type='TestLoop')
 
 default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', by_epoch=False,
-                    interval=2000, save_best='mIoU', max_keep_ckpts=3),
+                    interval=2000, save_best='mIoU', max_keep_ckpts=1),
     logger=dict(type='LoggerHook', interval=50, log_metric_by_epoch=False),
 )
+
+find_unused_parameters = True
