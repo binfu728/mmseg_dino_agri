@@ -75,7 +75,7 @@ val_pipeline = [
 # ── 数据集加载器 (使用完全自定义的 split 逻辑) ────────────────────────────────────
 train_dataloader = dict(
     _delete_=True,  # 确保原有的所有加载策略被抹除
-    batch_size=4,
+    batch_size=16,
     num_workers=4,
     dataset=dict(
         type='CustomAgriDataset',
@@ -87,8 +87,8 @@ train_dataloader = dict(
 
 val_dataloader = dict(
     _delete_=True,
-    batch_size=2,
-    num_workers=2,
+    batch_size=4,
+    num_workers=4,
     dataset=dict(
         type='CustomAgriDataset',
         data_root=DATA_ROOT,
@@ -99,8 +99,8 @@ val_dataloader = dict(
 
 test_dataloader = dict(
     _delete_=True,
-    batch_size=2,
-    num_workers=2,
+    batch_size=4,
+    num_workers=4,
     dataset=dict(
         type='CustomAgriDataset',
         data_root=DATA_ROOT,
@@ -135,17 +135,17 @@ optim_wrapper = dict(
 )
 
 param_scheduler = [
-    dict(type='LinearLR', start_factor=1e-3, begin=0, end=3000, by_epoch=False),
-    dict(type='PolyLR', eta_min=0, power=0.9, begin=1500, end=80000, by_epoch=False),
+    dict(type='LinearLR', start_factor=1e-3, begin=0, end=1500, by_epoch=False),
+    dict(type='PolyLR', eta_min=0, power=0.9, begin=1500, end=40000, by_epoch=False),
 ]
-train_cfg = dict(type='IterBasedTrainLoop', max_iters=80000, val_interval=2000)
+train_cfg = dict(type='IterBasedTrainLoop', max_iters=40000, val_interval=2000)
 val_cfg   = dict(type='ValLoop')
 test_cfg  = dict(type='TestLoop')
 
 default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', by_epoch=False,
                     interval=2000, save_best='mIoU', max_keep_ckpts=1),
-    logger=dict(type='LoggerHook', interval=50, log_metric_by_epoch=False),
+    logger=dict(type='LoggerHook', interval=100, log_metric_by_epoch=False),
 )
 
 find_unused_parameters = True
