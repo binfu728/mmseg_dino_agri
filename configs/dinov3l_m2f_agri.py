@@ -14,11 +14,9 @@ DINO_CKPT   = '/mnt/ht2-nas2/00-model/00-fb/mmseg_data/weights/dinov3_vitl16_pre
 DATA_ROOT   = '/mnt/ht2-nas2/00-model/00-jiangzf/label20000/Segmentation/' 
 # ──────────────────────────────────────────────────────────────────────────────
 
-img_size    = 256
+img_size    = 512
 num_classes = 2
 
-# 因为我们已经在 LoadCustomRaster 里归一化了，所以必须删掉原本的预处理器归一化参数，
-# 只保留 GPU 的 padding (Pad_val) 保证 Mask2Former 不报错。
 data_preprocessor = dict(
     type='SegDataPreProcessor',
     _delete_=True,
@@ -40,13 +38,14 @@ model = dict(
         patch_size=16,
         checkpoint=DINO_CKPT,
         freeze_backbone=False,
+        finetune_vit=True, # 核心修复：确保前向传播构建计算图
     ),
     decode_head=dict(
         in_channels=[1024, 1024, 1024, 1024],
         strides=[4, 8, 16, 32],
         num_classes=num_classes,
+        num_queries=50,
         loss_cls=dict(
-            _delete_=True, # 强行覆盖原版可能存在的 FocalLoss 字典
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=False,
             loss_weight=2.0,
@@ -64,11 +63,13 @@ train_pipeline = [
     dict(type='RandomFlip', prob=0.5, direction='horizontal'),
     dict(type='RandomFlip', prob=0.5, direction='vertical'),
     dict(type='PhotoMetricDistortion'),
+    dict(type='CustomNormalize'), # 核心修复：补充全局均值方差归一化
     dict(type='PackSegInputs'),
 ]
 
 val_pipeline = [
     dict(type='LoadCustomRaster', img_size=img_size),
+    dict(type='CustomNormalize'), # 核心修复：补充全局均值方差归一化
     dict(type='PackSegInputs'),
 ]
 
@@ -118,27 +119,27 @@ embed_multi = dict(lr_mult=1.0, decay_mult=0.0)
 
 optim_wrapper = dict(
     _delete_=True,
-    type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=1e-4, weight_decay=0.05,
+    type='AmpOptimWrapper',
+    dtype='bfloat16',
+    loss_scale='dynamic',
+    optimizer=dict(type='AdamW', lr=5e-5, weight_decay=0.05,
                    eps=1e-8, betas=(0.9, 0.999)),
     clip_grad=dict(max_norm=0.01, norm_type=2),
     paramwise_cfg=dict(
         custom_keys={
-            # 修复：仅对ViT本身（预训练权重）缩小学习率，保证Adapter正常收敛
             'backbone.adapter.backbone': dict(lr_mult=0.1, decay_mult=1.0),
             'query_embed': embed_multi,
-            'query_feat':  embed_multi,
+            'query_feat': embed_multi,
             'level_embed': embed_multi,
         },
-        norm_decay_mult=0.0,
-    ),
-)
+        norm_decay_mult=0.0))
 
+max_iters = 40000
 param_scheduler = [
     dict(type='LinearLR', start_factor=1e-3, begin=0, end=1500, by_epoch=False),
-    dict(type='PolyLR', eta_min=0, power=0.9, begin=1500, end=40000, by_epoch=False),
+    dict(type='PolyLR', eta_min=0, power=0.9, begin=1500, end=max_iters, by_epoch=False),
 ]
-train_cfg = dict(type='IterBasedTrainLoop', max_iters=40000, val_interval=2000)
+train_cfg = dict(type='IterBasedTrainLoop', max_iters=max_iters, val_interval=2000)
 val_cfg   = dict(type='ValLoop')
 test_cfg  = dict(type='TestLoop')
 
