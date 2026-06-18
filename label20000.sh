@@ -6,7 +6,7 @@ set -e
 MMSEG_ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 GPUS=${1:-8}; shift || true
-PORT=${PORT:-29512}
+PORT=${PORT:-29555}
 
 # 2. 直接指向当前目录下的 config 文件（请把下面这个名字换成你实际的 config 文件名）
 CONFIG="$MMSEG_ROOT/configs/dinov3l_m2f_agri.py"
