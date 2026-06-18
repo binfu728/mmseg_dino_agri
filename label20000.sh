@@ -12,7 +12,7 @@ PORT=${PORT:-29555}
 CONFIG="$MMSEG_ROOT/configs/dinov3l_m2f_agri.py"
 
 # 3. 在当前目录下创建 work_dirs 文件夹
-WORK_DIR="$MMSEG_ROOT/work_dirs/123"
+WORK_DIR="$MMSEG_ROOT/work_dirs/dinov3l_m2f_agri"
 PY=${PY:-python}
 
 mkdir -p "$WORK_DIR"

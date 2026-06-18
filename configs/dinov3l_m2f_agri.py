@@ -76,7 +76,7 @@ val_pipeline = [
 # ── 数据集加载器 (使用完全自定义的 split 逻辑) ────────────────────────────────────
 train_dataloader = dict(
     _delete_=True,  # 确保原有的所有加载策略被抹除
-    batch_size=16,
+    batch_size=4,
     num_workers=4,
     dataset=dict(
         type='CustomAgriDataset',
@@ -119,9 +119,7 @@ embed_multi = dict(lr_mult=1.0, decay_mult=0.0)
 
 optim_wrapper = dict(
     _delete_=True,
-    type='AmpOptimWrapper',
-    dtype='bfloat16',
-    loss_scale='dynamic',
+    type='OptimWrapper',
     optimizer=dict(type='AdamW', lr=5e-5, weight_decay=0.05,
                    eps=1e-8, betas=(0.9, 0.999)),
     clip_grad=dict(max_norm=0.01, norm_type=2),
@@ -134,10 +132,10 @@ optim_wrapper = dict(
         },
         norm_decay_mult=0.0))
 
-max_iters = 40000
+max_iters = 80000
 param_scheduler = [
-    dict(type='LinearLR', start_factor=1e-3, begin=0, end=1500, by_epoch=False),
-    dict(type='PolyLR', eta_min=0, power=0.9, begin=1500, end=max_iters, by_epoch=False),
+    dict(type='LinearLR', start_factor=1e-3, begin=0, end=3000, by_epoch=False),
+    dict(type='PolyLR', eta_min=0, power=0.9, begin=3000, end=max_iters, by_epoch=False),
 ]
 train_cfg = dict(type='IterBasedTrainLoop', max_iters=max_iters, val_interval=2000)
 val_cfg   = dict(type='ValLoop')

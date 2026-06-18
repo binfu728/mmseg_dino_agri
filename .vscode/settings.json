@@ -1,0 +1,5 @@
+{
+    "python.condaPath": "/home/users_model/miniconda3/bin/conda",
+    "python.defaultInterpreterPath": "/home/users_model/miniconda3/envs/mmseg_dino/bin/python",
+    "python.venvPath": "/home/users_model/miniconda3/envs"
+}
